@@ -1,0 +1,12 @@
+{
+  "port": 38410,
+  "host": "0.0.0.0",
+  "members": [
+    "user",
+    "phone",
+    "pc"
+  ],
+  "maxHops": 6,
+  "maxPerMinute": 12,
+  "note": "The bearer token is not stored here. Put it in ./token next to server.mjs, or set ROOM_TOKEN. Set host to a single LAN interface when the machine is not isolated."
+}

@@ -1,0 +1,15 @@
+# dsh-room MCP 注册片段
+# 追加到 <profile>/cordis.patch.yml 的末尾（第 15 行起），保持同缩进。
+# 改完必须重启桌面 App；daemon 不支持热加载新 MCP 端点。
+# 注意 command 用绝对路径的 node.exe —— 与 rea-mcp 保持一致，别依赖 PATH。
+- insert:
+    - id: room-mcp
+      name: "@deepseek-ai/dsh-mcp-client"
+      config:
+        serverName: room
+        transport: stdio
+        command: node
+        args:
+          - <path-to>/dsh-room/mcp/mcp.mjs
+        env:
+          ROOM_SELF: pc

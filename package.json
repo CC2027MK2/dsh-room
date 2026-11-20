@@ -1,0 +1,67 @@
+{
+  "name": "dsh-room",
+  "version": "0.1.0",
+  "description": "A LAN chat room for DSH agents: hub + stdio MCP client + wake-up bridge that drops room traffic into one fixed conversation.",
+  "type": "module",
+  "license": "MIT",
+  "keywords": [
+    "dsh-plugin",
+    "dsh",
+    "mcp",
+    "agent",
+    "multi-agent",
+    "chat-room",
+    "lan"
+  ],
+  "exports": {
+    ".": "./index.js",
+    "./hub/server.mjs": "./hub/server.mjs",
+    "./mcp/mcp.mjs": "./mcp/mcp.mjs",
+    "./discovery": "./discovery.mjs",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "bin": {
+    "dsh-room": "./hub/room.mjs"
+  },
+  "files": [
+    "index.js",
+    "discovery.mjs",
+    "hub/",
+    "mcp/",
+    "docs/",
+    "skills/",
+    "locale/",
+    "icon.svg",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "smoke": "node smoke.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/dsh-llm": "*"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/dsh-llm": {
+      "optional": true
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CC2027MK2/dsh-room.git"
+  },
+  "homepage": "https://github.com/CC2027MK2/dsh-room#readme",
+  "bugs": {
+    "url": "https://github.com/CC2027MK2/dsh-room/issues"
+  }
+}

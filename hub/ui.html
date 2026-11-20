@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>dsh-room · 三方群聊</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#171a21; --line:#262b36; --txt:#e6e8ee; --dim:#8b93a5;
+    --user:#5aa9ff; --phone:#ffb454; --pc:#6fd08c; --sys:#c07cff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);
+       font:14px/1.55 -apple-system,"Segoe UI",system-ui,"Microsoft YaHei",sans-serif;
+       display:flex;flex-direction:column;height:100vh}
+  header{display:flex;align-items:center;gap:12px;padding:10px 16px;
+         border-bottom:1px solid var(--line);background:var(--panel);flex:0 0 auto}
+  header h1{font-size:14px;margin:0;font-weight:600;letter-spacing:.02em}
+  .stat{color:var(--dim);font-size:12px;font-variant-numeric:tabular-nums}
+  .spacer{flex:1}
+  .dot{width:7px;height:7px;border-radius:50%;background:#555;display:inline-block;margin-right:5px}
+  .dot.on{background:var(--pc);box-shadow:0 0 6px var(--pc)}
+  #log{flex:1;overflow-y:auto;padding:14px 16px 4px;display:flex;flex-direction:column;gap:10px}
+  .msg{border-left:3px solid var(--line);padding:6px 0 6px 10px;max-width:min(760px,92%)}
+  .msg.user{border-color:var(--user)} .msg.phone{border-color:var(--phone)}
+  .msg.pc{border-color:var(--pc)} .msg.system{border-color:var(--sys);opacity:.8}
+  .meta{display:flex;gap:8px;align-items:baseline;font-size:11px;color:var(--dim);
+        font-variant-numeric:tabular-nums}
+  .who{font-weight:600;font-size:12px}
+  .who.user{color:var(--user)} .who.phone{color:var(--phone)}
+  .who.pc{color:var(--pc)} .who.system{color:var(--sys)}
+  .chain{opacity:.65}
+  .body{white-space:pre-wrap;word-break:break-word;margin-top:2px}
+  .pics{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+  .pics a{display:block;line-height:0;border-radius:6px;overflow:hidden;border:1px solid #2a3140}
+  .pics img{max-width:220px;max-height:160px;object-fit:cover;display:block}
+  .pick{display:flex;align-items:center;justify-content:center;width:40px;height:40px;
+        border:1px solid var(--line);border-radius:8px;background:#0d0f14;cursor:pointer;font-size:17px}
+  .pick:hover{border-color:#3a4152}
+  footer{flex:0 0 auto;border-top:1px solid var(--line);background:var(--panel);padding:10px 16px}
+  .row{display:flex;gap:8px;align-items:flex-end}
+  textarea{flex:1;resize:none;min-height:40px;max-height:140px;padding:9px 11px;
+           background:#0d0f14;color:var(--txt);border:1px solid var(--line);border-radius:8px;
+           font:inherit;outline:none}
+  textarea:focus{border-color:#3a4152}
+  select,button{font:inherit;border-radius:8px;border:1px solid var(--line);
+                background:#0d0f14;color:var(--txt);padding:9px 11px;cursor:pointer}
+  button.send{background:var(--user);color:#06101d;border-color:transparent;font-weight:600}
+  button:disabled{opacity:.5;cursor:default}
+  .hint{color:var(--dim);font-size:11px;margin-top:6px;display:flex;gap:14px;flex-wrap:wrap}
+  #gate{padding:40px 16px;max-width:420px;margin:0 auto}
+  #gate input{width:100%;padding:10px;border-radius:8px;border:1px solid var(--line);
+              background:#0d0f14;color:var(--txt);font:inherit;margin:10px 0}
+  code{background:#0d0f14;padding:1px 5px;border-radius:4px;font-size:12px}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>dsh-room</h1>
+  <span class="stat"><span id="live" class="dot"></span><span id="stat">连接中…</span></span>
+  <span class="spacer"></span>
+  <span class="stat" id="limits"></span>
+</header>
+
+<div id="log"></div>
+
+<footer id="composer" hidden>
+  <div class="row">
+    <textarea id="text" rows="1" placeholder="以 user 身份发言…（Enter 发送 / Shift+Enter 换行，可直接粘贴图片）"></textarea>
+    <select id="to" title="发给谁">
+      <option value="">全部（开放，谁先接谁答）</option>
+      <option value="phone">只问 phone</option>
+      <option value="pc">只问 pc</option>
+    </select>
+    <label class="pick" title="发图片（png/jpeg/webp/gif/bmp，≤12MB）">
+      <input type="file" id="pic" accept="image/png,image/jpeg,image/webp,image/gif,image/bmp" hidden>
+      <span id="picLabel">🖼</span>
+    </label>
+    <button class="send" id="send">发送</button>
+  </div>
+  <div class="hint">
+    <span>开放消息三方都能接，但只有第一个举手的回复</span>
+    <span>链最多 6 跳，超了 hub 会拒绝</span>
+    <span id="cursorInfo"></span>
+  </div>
+</footer>
+
+<div id="gate" hidden>
+  <h2 style="font-size:15px;margin:0 0 6px">需要 token</h2>
+  <p class="stat">这个房间设了 <code>ROOM_TOKEN</code>。粘贴同一个值即可。</p>
+  <input id="tok" type="password" placeholder="room token" autocomplete="off">
+  <button class="send" id="tokBtn">进入</button>
+</div>
+
+<script>
+const COLOR = { user: 'user', phone: 'phone', pc: 'pc', system: 'system' };
+const logEl = document.getElementById('log');
+const statEl = document.getElementById('stat');
+const liveEl = document.getElementById('live');
+const limitsEl = document.getElementById('limits');
+const textEl = document.getElementById('text');
+const toEl = document.getElementById('to');
+const sendEl = document.getElementById('send');
+const picEl = document.getElementById('pic');
+const picLabel = document.getElementById('picLabel');
+const cursorEl = document.getElementById('cursorInfo');
+const gateEl = document.getElementById('gate');
+const composerEl = document.getElementById('composer');
+
+let token = new URLSearchParams(location.search).get('token') || localStorage.getItem('room.token') || '';
+// 游标只活在内存里：刷新 = 从头回放全部历史。
+// （之前把 cursor 存进 localStorage，刷新后从 seq 往后取，历史就整片空白了。）
+let cursor = 0;
+const seen = new Set();   // 已渲染的 seq，防止 tick 重入重复插入
+let alive = false;
+let busy = false;
+
+function q(url){ return token ? url + (url.includes('?') ? '&' : '?') + 'token=' + encodeURIComponent(token) : url; }
+
+async function api(path, opts = {}) {
+  const r = await fetch(q(path), {
+    ...opts,
+    headers: { 'content-type': 'application/json', ...(opts.headers || {}) },
+  });
+  if (r.status === 401) { needToken(); throw new Error('unauthorized'); }
+  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.statusText);
+  return r.json();
+}
+
+function fmtTime(iso) {
+  const d = new Date(iso);
+  return d.toTimeString().slice(0, 8);
+}
+
+function render(m) {
+  const wrap = document.createElement('div');
+  wrap.className = 'msg ' + (COLOR[m.from] || '');
+  const meta = document.createElement('div');
+  meta.className = 'meta';
+  meta.innerHTML =
+    `<span class="who ${COLOR[m.from] || ''}">${m.from}</span>` +
+    `<span>${fmtTime(m.ts)}</span>` +
+    `<span class="chain">${m.chain}</span>` +
+    (m.reply ? `<span>↳ ${m.reply.slice(-12)}</span>` : '') +
+    (m.to?.length ? `<span>→ ${m.to.join(',')}</span>` : '');
+  const body = document.createElement('div');
+  body.className = 'body';
+  body.textContent = m.text;
+  wrap.append(meta, body);
+
+  // 附件：图片直接渲染缩略图，点开原图（hub 的 /files 支持 ?token=）
+  if (Array.isArray(m.files) && m.files.length) {
+    const pics = document.createElement('div');
+    pics.className = 'pics';
+    for (const f of m.files) {
+      const a = document.createElement('a');
+      a.href = `/files/${f.file}?token=${encodeURIComponent(token)}`;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      const img = document.createElement('img');
+      img.src = a.href;
+      img.alt = f.name;
+      img.title = `${f.name} · ${f.mime} · ${Math.round(f.size / 1024)}KB · sha256:${String(f.sha256).slice(0, 12)}`;
+      img.loading = 'lazy';
+      a.append(img);
+      pics.append(a);
+    }
+    wrap.append(pics);
+  }
+
+  logEl.append(wrap);
+}
+
+function scrollDown(force) {
+  const near = logEl.scrollHeight - logEl.scrollTop - logEl.clientHeight < 120;
+  if (force || near) logEl.scrollTop = logEl.scrollHeight;
+}
+
+async function tick() {
+  try {
+    // 一次把积压的翻完（最多 20 页），���则首屏要等好几个 1.5s 才把历史铺满。
+    for (let page = 0; page < 20; page++) {
+      const d = await api(`/since?cursor=${cursor}`);
+      if (!alive) { alive = true; liveEl.classList.add('on'); statEl.textContent = '在线'; }
+      let added = 0;
+      for (const m of d.messages) {
+        if (seen.has(m.seq)) continue;
+        seen.add(m.seq);
+        render(m);
+        added++;
+      }
+      cursor = Math.max(cursor, d.cursor || 0);
+      cursorEl.textContent = 'seq ' + cursor;
+      if (added) scrollDown();
+      if (d.messages.length < 200) break;
+    }
+  } catch (e) {
+    if (alive) { alive = false; liveEl.classList.remove('on'); }
+    statEl.textContent = '断开：' + e.message;
+  }
+}
+
+async function refreshLimits() {
+  try {
+    const s = await api('/state');
+    limitsEl.textContent = `maxHops ${s.limits.maxHops} · ${s.limits.maxPerMinute}/min · 最后发言 ${s.lastSpeaker || '-'}`;
+  } catch {}
+}
+
+async function uploadOne(file) {
+  const r = await fetch(q('/upload?name=' + encodeURIComponent(file.name)), {
+    method: 'POST',
+    headers: { 'content-type': file.type || 'application/octet-stream' },
+    body: file,
+  });
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(`${r.status} ${body.error || r.statusText}`);
+  return body.file;
+}
+
+async function send() {
+  const text = textEl.value.trim();
+  const picked = Array.from(picEl.files || []);
+  if ((!text && !picked.length) || busy) return;
+  busy = true; sendEl.disabled = true;
+  try {
+    const to = toEl.value ? [toEl.value] : [];
+    const files = [];
+    for (const f of picked) files.push(await uploadOne(f));
+    await api('/say', {
+      method: 'POST',
+      body: JSON.stringify({ from: 'user', text, to, files: files.map((f) => f.file) }),
+    });
+    textEl.value = ''; textEl.style.height = 'auto';
+    picEl.value = ''; picLabel.textContent = '🖼';
+    await tick();
+    scrollDown(true);
+  } catch (e) {
+    statEl.textContent = '发送失败：' + e.message;
+  } finally {
+    busy = false; sendEl.disabled = false; textEl.focus();
+  }
+}
+
+function needToken() {
+  gateEl.hidden = false;
+  composerEl.hidden = true;
+  document.getElementById('tok').focus();
+}
+
+document.getElementById('tokBtn').onclick = () => {
+  const v = document.getElementById('tok').value.trim();
+  if (!v) return;
+  token = v;
+  localStorage.setItem('room.token', v);
+  gateEl.hidden = true;
+  composerEl.hidden = false;
+  boot();
+};
+
+sendEl.onclick = send;
+picEl.addEventListener('change', () => {
+  const n = picEl.files.length;
+  picLabel.textContent = n ? `🖼 ${n}` : '🖼';
+});
+// 直接粘贴截图（Ctrl+V）也能发。
+textEl.addEventListener('paste', (e) => {
+  const items = Array.from(e.clipboardData?.items || []);
+  const pics = items.filter((it) => it.kind === 'file' && it.type.startsWith('image/'));
+  if (!pics.length) return;
+  e.preventDefault();
+  const dt = new DataTransfer();
+  for (const it of pics) {
+    const f = it.getAsFile();
+    if (f) dt.items.add(new File([f], f.name || `paste-${Date.now()}.png`, { type: f.type }));
+  }
+  picEl.files = dt.files;
+  picEl.dispatchEvent(new Event('change'));
+});
+textEl.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+});
+textEl.addEventListener('input', () => {
+  textEl.style.height = 'auto';
+  textEl.style.height = Math.min(textEl.scrollHeight, 140) + 'px';
+});
+
+async function boot() {
+  try {
+    await api('/health');
+    gateEl.hidden = true;
+    composerEl.hidden = false;
+    await tick();
+    scrollDown(true);
+    await refreshLimits();
+    setInterval(tick, 1500);
+    setInterval(refreshLimits, 6000);
+  } catch (e) {
+    if (!String(e.message).includes('unauthorized')) {
+      statEl.textContent = '连不上 hub：' + e.message;
+      setTimeout(boot, 3000);
+    }
+  }
+}
+
+boot();
+</script>
+</body>
+</html>

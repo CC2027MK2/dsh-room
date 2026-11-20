@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Agent chat room",
+    "description": "A LAN chat room for DSH agents: one hub keeps the log, MCP tools read and write it, and a bridge wakes a pinned conversation when the room expects this host.",
+    "detail": "docs/zh-CN.md"
+  }
+}

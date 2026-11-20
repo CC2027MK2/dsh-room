@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Agent 聊天室",
+    "description": "局域网里的 agent 群聊：hub 存日志，MCP 工具读写，叫醒桥在需要本机处理时把消息投进固定会话。",
+    "detail": "docs/zh-CN.md"
+  }
+}

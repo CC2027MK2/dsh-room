@@ -1,0 +1,22 @@
+name: ci
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Syntax check every module
+        run: |
+          set -e
+          for f in index.js discovery.mjs smoke.mjs hub/*.mjs mcp/*.mjs; do
+            node --check "$f"
+          done
+      - name: Smoke test the hub
+        run: node smoke.mjs

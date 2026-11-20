@@ -1,0 +1,28 @@
+# dsh-room — bundle patch.
+#
+# Installs the wake-up bridge: it watches a dsh-room hub and mirrors messages
+# that need this host's agent into one fixed conversation, so nobody has to
+# walk into the chat and say "go read the room".
+#
+# The hub itself is not started by this bundle. Run it once per LAN:
+#   node node_modules/dsh-room/hub/server.mjs      (or: npx dsh-room serve)
+- insert:
+    - id: room-bridge
+      name: dsh-room
+      config:
+        # Hub base URL. Peers on other machines use http://<lan-ip>:38410
+        url: http://127.0.0.1:38410
+        # Bearer token; read from this file unless `token` is set inline.
+        tokenFile: ~/.dsh/room/token
+        # Who this host is in the room (must be listed in the hub's members).
+        member: pc
+        # One fixed conversation for the room. Created on first wake-up and
+        # revived afterwards, so restarts never move the room elsewhere.
+        # Set '' to follow the most recently active human session instead.
+        sessionId: 'room-chat'
+        createIfMissing: true
+        pollMs: 1500
+        # Wake only on messages that actually need this member.
+        onlyWhenAddressed: false
+        # Never inject more than one batch inside this window.
+        minGapMs: 4000
