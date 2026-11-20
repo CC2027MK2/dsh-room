@@ -157,11 +157,31 @@ async function cmdState() {
 const [cmd, ...argv] = process.argv.slice(2);
 const { pos, opt } = parseArgs(argv);
 
+const USAGE = `dsh-agent-room — member-side CLI for a dsh-room hub
+
+用法: room.mjs <say|next|read|state> …
+
+  say <member> "内容" [--to phone,pc] [--reply <msg>] [--files <file>…]
+  next <member> [--since N] [--claim] [--watch]
+  read [--cursor N] [--limit N]
+  state
+
+环境变量:
+  ROOM_URL     hub 地址，默认 http://127.0.0.1:38410
+  ROOM_TOKEN   bearer token（否则读 <data>/token 或 ~/.dsh/room-bridge/hub.json 的 memo）
+  ROOM_SELF    本机成员名，默认 pc
+`;
+
+if (cmd === '--help' || cmd === '-h' || cmd === 'help') {
+  console.log(USAGE);
+  process.exit(0);
+}
+
 try {
   const table = { say: cmdSay, next: cmdNext, read: cmdRead, state: cmdState };
   const fn = table[cmd];
   if (!fn) {
-    console.log('用法: room.mjs <say|next|read|state> …');
+    console.log(USAGE);
     process.exit(2);
   }
   process.exit(await fn(pos, opt));
