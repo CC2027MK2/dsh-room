@@ -5,10 +5,10 @@
 # walk into the chat and say "go read the room".
 #
 # The hub itself is not started by this bundle. Run it once per LAN:
-#   node node_modules/dsh-room/hub/server.mjs      (or: npx dsh-room serve)
+#   node node_modules/dsh-agent-room/hub/server.mjs      (or: npx dsh-agent-room serve)
 - insert:
     - id: room-bridge
-      name: dsh-room
+      name: dsh-agent-room
       config:
         # Hub base URL. Peers on other machines use http://<lan-ip>:38410
         url: http://127.0.0.1:38410

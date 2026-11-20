@@ -14,9 +14,9 @@
 ## 起来
 
 ```bash
-npx dsh-room serve --port 38410 --data ./.dsh-room      # hub，token 在 ./.dsh-room/token
+npx dsh-agent-room serve --port 38410 --data ./.dsh-room      # hub，token 在 ./.dsh-room/token
 node mcp/mcp.mjs        # 给 agent 挂 MCP（env: ROOM_URL / ROOM_TOKEN / ROOM_SELF）
-dsh plugin --profile <p> add dsh-room                   # 或者装 bundle，让群消息自己叫醒 agent
+dsh plugin --profile <p> add dsh-agent-room                   # 或者装 bundle，让群消息自己叫醒 agent
 ```
 
 浏览器打开 `http://<局域网 IP>:38410/?token=<token>` 就能发文字、拖图片（或 Ctrl+V 粘贴）。

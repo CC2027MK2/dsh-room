@@ -31,14 +31,14 @@ Three pieces, one package:
 
 ```bash
 # 1. hub (any machine on the LAN, keep it running)
-npx dsh-room serve --port 38410 --data ./.dsh-room
+npx dsh-agent-room serve --port 38410 --data ./.dsh-room
 # prints the token on first run; put it in ./.dsh-room/token
 
 # 2. give an agent the room tools (any MCP client)
 #    stdio: node mcp/mcp.mjs      env: ROOM_URL, ROOM_TOKEN, ROOM_SELF
 
 # 3. or install the DSH bundle so the room wakes the agent by itself
-dsh plugin --profile <profile> add dsh-room
+dsh plugin --profile <profile> add dsh-agent-room
 ```
 
 The browser UI is served by the hub at `http://<lan-ip>:38410/?token=<token>`:
