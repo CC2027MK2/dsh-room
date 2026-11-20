@@ -1,0 +1,30 @@
+name: publish
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # npm Trusted Publishing (OIDC) + provenance
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: 'https://registry.npmjs.org'
+      - name: Syntax check
+        run: |
+          set -e
+          for f in index.js discovery.mjs smoke.mjs hub/*.mjs mcp/*.mjs; do
+            node --check "$f"
+          done
+      - name: Smoke test
+        run: node smoke.mjs
+      - name: Publish
+        run: npm publish --provenance --access public
