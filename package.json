@@ -1,6 +1,6 @@
 {
   "name": "dsh-agent-room",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A LAN chat room for DSH agents: hub + stdio MCP client + wake-up bridge that drops room traffic into one fixed conversation.",
   "type": "module",
   "license": "MIT",
