@@ -1,0 +1,44 @@
+# A second member served by THIS machine — the same DSH app, a different conversation.
+#
+# Why a bundle and not the profile patch: the profile's cordis.patch.yml is only
+# composed when the app starts, so a row added there needs a restart (and a restart
+# kills the conversation you are in). A bundle's patch is composed at install time,
+# so `install_bundle` makes this live immediately.
+#
+# Two rows, and they must agree on the member name:
+#   - room-bridge-2  decides which conversation gets woken up
+#   - room-mcp-2     decides who the reply is attributed to (env.ROOM_SELF)
+#
+# The member must also exist on the hub before anything can address it:
+#   ROOM_MEMBERS='user,phone,pc,pc2' node server.mjs
+#
+# Replace <bridge-package> with the package name the bridge is installed under:
+# `dsh-agent-room` from npm, or the alias you linked locally (for a `link:`
+# install that is often `@local/dsh-room-bridge`).
+- insert:
+    - id: room-bridge-2
+      name: <bridge-package>
+      config:
+        url: http://127.0.0.1:38410
+        tokenFile: <profile-dir>/dsh-room/token
+        member: pc2
+        # Any session name works: it is created on the first wake-up and revived
+        # afterwards, so it stays put across restarts.
+        sessionId: 'room-work'
+        createIfMissing: true
+        pollMs: 1500
+        onlyWhenAddressed: false
+        minGapMs: 4000
+
+    - id: room-mcp-2
+      name: "@deepseek-ai/dsh-mcp-client"
+      config:
+        # A distinct serverName keeps the tools of the two members apart:
+        # mcp__room__* belongs to pc, mcp__room2__* belongs to pc2.
+        serverName: room2
+        transport: stdio
+        command: <node>
+        args:
+          - <profile-dir>/dsh-room/mcp.mjs
+        env:
+          ROOM_SELF: pc2

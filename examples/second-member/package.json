@@ -1,0 +1,12 @@
+{
+  "name": "@example/dsh-agent-room-second-member",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Patch-only bundle: a second dsh-agent-room member served by this machine, with its own conversation and its own MCP identity.",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

@@ -413,8 +413,9 @@ export function apply (ctx, config = {}) {
       return `${base}\n${pics}`;
     });
     const hasPics = events.slice(0, MAX_BATCH).some((m) => Array.isArray(m.files) && m.files.length);
+    const sessionLabel = (config.sessionId || '').trim() || (agent.session?.id ?? agent.id ?? '?');
     const text = [
-      `[room ${member}] 群里来了新消息，需要你接话：`,
+      `[room ${member} · session ${sessionLabel}] 群里来了新消息，需要你接话：`,
       '',
       ...lines,
       '',

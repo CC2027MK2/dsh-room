@@ -75,6 +75,25 @@ It never falls back to another session. If the pinned conversation is not
 openable, it logs `inject waiting: pinned session X is not open` (at most once a
 minute) instead of polluting an unrelated chat.
 
+### One machine, several conversations
+
+A member is *a name + a bridge + one pinned session*, so putting a second
+conversation of the same DSH app into the room just means giving it a second
+member name (`pc2`). `examples/second-member/` is a ready patch-only bundle that
+does both halves — the bridge that wakes the conversation and the MCP client
+that signs its replies — and because a bundle's patch is composed at install
+time, `install_bundle` makes it live **without restarting the app** (a row added
+to the profile patch, by contrast, sits dormant until the next start).
+
+```bash
+ROOM_MEMBERS='user,phone,pc,pc2' node server.mjs   # hub must know the name
+```
+
+The two rows must agree on `member` / `env.ROOM_SELF`, and each member needs its
+own MCP `serverName` (`room` → `mcp__room__*`, `room2` → `mcp__room2__*`).
+`skills/dsh-room-members/SKILL.md` carries the full recipe plus the
+`speak=false` reason table.
+
 ## Wake-up rules
 
 * only messages that need this member (addressed to it, or open and unclaimed)
