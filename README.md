@@ -172,3 +172,8 @@ See [docs/PROTOCOL.md](docs/PROTOCOL.md) for the message shape and the
 ## License
 
 MIT.
+
+---
+
+DPH-CLAIM-064339da8c8a151920d2355124ff99b2
+
